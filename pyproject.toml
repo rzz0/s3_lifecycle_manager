@@ -1,0 +1,48 @@
+
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "s3_lifecycle_manager"
+version = "0.1.0"
+description = "A module to manage the lifecycle policies of S3 buckets"
+readme = "README.md"
+authors = [
+    {name = "Rodrigo de Souza Rampazzo", email = "rosorzz@protonmail.com"}
+]
+license = {text = "MIT License"}
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent"
+]
+keywords = ["aws", "s3", "lifecycle", "management", "boto3"]
+dependencies = [
+    "boto3",
+    "botocore"
+]
+requires-python = ">=3.6"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "flake8",
+    "black",
+    "mypy"
+]
+
+[project.urls]
+"Bug Reports" = "https://github.com/rzz0/s3_lifecycle_manager/issues"
+"Source" = "https://github.com/rzz0/s3_lifecycle_manager"
+
+[project.scripts]
+s3_lifecycle_manager = "s3_lifecycle_manager.__main__:main"
