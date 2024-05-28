@@ -26,8 +26,9 @@ import os
 import sys
 from io import StringIO
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from s3_lifecycle_manager.auth import configure_aws_credentials, save_credentials_to_file
+import logging
 
 
 class TestAWSCredentialConfiguration(unittest.TestCase):
@@ -43,13 +44,14 @@ class TestAWSCredentialConfiguration(unittest.TestCase):
             'Arn': 'arn:aws:iam::test-account:user/test-user'
         }
 
-        with patch('builtins.input', return_value=''), \
-                patch('getpass.getpass', return_value=''):
-            captured_output = self._get_output(configure_aws_credentials)
-            mock_boto_client().get_caller_identity.assert_called_once()
-            # Verifica se a mensagem correta foi impressa
-            self.assertIn(
-                "AWS credentials are already configured.", captured_output)
+        with self.assertLogs('s3_lifecycle_manager.auth', level='INFO') as log:
+            with patch('builtins.input', return_value=''), \
+                    patch('getpass.getpass', return_value=''):
+                configure_aws_credentials()
+                mock_boto_client().get_caller_identity.assert_called_once()
+                # Verifica se a mensagem correta foi logada
+                self.assertIn(
+                    "INFO:s3_lifecycle_manager.auth:AWS credentials are already configured.", log.output)
 
     @patch('s3_lifecycle_manager.auth.os.makedirs')
     @patch('s3_lifecycle_manager.auth.open', new_callable=unittest.mock.mock_open)
