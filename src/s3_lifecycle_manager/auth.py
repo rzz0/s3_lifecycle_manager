@@ -30,6 +30,11 @@ import os
 from getpass import getpass
 import boto3
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
+from .logger import configure_logging, get_logger
+
+# Configure logger
+configure_logging()
+logger = get_logger(__name__)
 
 
 def configure_aws_credentials():
@@ -43,16 +48,18 @@ def configure_aws_credentials():
     try:
         # Try to create a boto3 client to see if credentials are already configured
         boto3.client('sts').get_caller_identity()
-        print("AWS credentials are already configured.")
+        logger.info("AWS credentials are already configured.")
     except (NoCredentialsError, PartialCredentialsError):
-        print("AWS credentials not found. Please enter your AWS credentials.")
+        logger.info(
+            "AWS credentials not found. Please enter your AWS credentials.")
         aws_access_key_id = input("AWS Access Key ID: ").strip()
         aws_secret_access_key = getpass("AWS Secret Access Key: ").strip()
         aws_session_token = getpass(
             "AWS Session Token (leave empty if not applicable): ").strip()
 
         if not aws_access_key_id or not aws_secret_access_key:
-            print("AWS Access Key ID and Secret Access Key are required.")
+            logger.error(
+                "AWS Access Key ID and Secret Access Key are required.")
             return
 
         # Set credentials in environment variables
@@ -88,7 +95,7 @@ def save_credentials_to_file(aws_access_key_id, aws_secret_access_key, aws_sessi
         file.write(f"aws_secret_access_key = {aws_secret_access_key}\n")
         if aws_session_token:
             file.write(f"aws_session_token = {aws_session_token}\n")
-    print(f"Credentials saved to {config_file}")
+    logger.info(f"Credentials saved to {config_file}")
 
 
 if __name__ == "__main__":
