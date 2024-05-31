@@ -1,38 +1,83 @@
 """
-Main function to run the S3 bucket lifecycle manager.
+S3 Lifecycle Manager
+====================
 
-Author: Rodrigo de Souza Rampazzo
-E-mail: rosorzz@protonmail.com
-GitHub: rzz0
-url: https://github.com/rzz0/s3_lifecycle_manager
+This module manages the lifecycle policies of S3 buckets, listing the buckets
+and extracting the lifecycle rules to save in a CSV file. It includes
+information about buckets that do not have lifecycle rules. Additionally,
+it provides functionality to back up and optionally restore lifecycle policies.
+
+Example usage:
+--------------
+    from s3_lifecycle_manager import S3LifecycleManager, S3LifecycleBackupManager
+
+    manager = S3LifecycleManager()
+    manager.process_buckets()
+    manager.save_policies_csv('lifecycle_buckets.csv')
+
+    backup_manager = S3LifecycleBackupManager('./backups')
+    backup_manager.export_lifecycle_policies(manager.list_buckets())
+
+Dependencies:
+-------------
+- boto3
+
+Author:
+-------
+- Rodrigo de Souza Rampazzo <rosorzz@protonmail.com>
+- GitHub: https://github.com/rzz0
+
+License:
+--------
+MIT License
 """
 
+from botocore.exceptions import ClientError
 from .manager import S3LifecycleManager
 from .backup_manager import S3LifecycleBackupManager
-from .logger import configure_logging
+from .logger import configure_logging, get_logger
 
 
 def main():
     """
-    Main function to run the S3 bucket lifecycle manager with backup functionality.
+    Main function to run the S3 bucket lifecycle manager with
+    backup functionality.
     """
     configure_logging()
+    logger = get_logger(__name__)
 
-    # Diretório onde os backups serão armazenados
-    backup_dir = './backups'
+    logger.info("Starting the S3 bucket lifecycle manager script.")
+
+    # Directory where backups will be stored
+    backup_dir = "./backups"
     manager = S3LifecycleManager()
     backup_manager = S3LifecycleBackupManager(backup_dir)
 
-    # Processar os buckets e gerar backup das políticas de ciclo de vida
-    manager.process_buckets()
-    manager.save_policies_csv('lifecycle_buckets.csv')
+    try:
+        # Process buckets and generate backup of lifecycle policies
+        logger.info("Listing all S3 buckets.")
+        bucket_names = [bucket["Name"] for bucket in manager.list_buckets()]
 
-    # Exportar as regras de ciclo de vida atuais
-    bucket_names = [bucket['Name'] for bucket in manager.list_buckets()]
-    backup_manager.export_lifecycle_policies(bucket_names)
+        logger.info("Processing S3 buckets to extract lifecycle policies.")
+        manager.process_buckets(bucket_names)
 
-    # Opcional: Restaurar as regras de ciclo de vida de um bucket específico
-    # backup_manager.restore_lifecycle_policies('nome-do-bucket')
+        logger.info("Saving lifecycle policies to CSV.")
+        manager.save_policies_csv("lifecycle_buckets.csv")
+
+        logger.info("Exporting current lifecycle policies.")
+        lifecycle_policies = {
+            bucket: manager.get_lifecycle_policy(bucket) for bucket in bucket_names
+        }
+        backup_manager.export_lifecycle_policies(lifecycle_policies)
+
+        # Optional: Restore lifecycle policies for a specific bucket
+        # backup_manager.restore_lifecycle_policies('bucket-name')
+
+        logger.info("Finished the S3 bucket lifecycle manager script.")
+    except ClientError as error:
+        logger.error("An AWS client error occurred: %s", error)
+    except Exception as error:  # pylint: disable=W0718
+        logger.error("An unexpected error occurred: %s", error)
 
 
 if __name__ == "__main__":
