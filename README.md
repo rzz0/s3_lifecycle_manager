@@ -2,6 +2,8 @@
 
 The S3 Lifecycle Manager is a module designed to manage the lifecycle policies of S3 buckets. It allows you to process, export, and restore lifecycle policies, providing functionalities for backup and management of these policies.
 
+**Versão em português disponível [aqui](README_pt_BR.md).**
+
 ## Author
 
 - **Name:** Rodrigo de Souza Rampazzo

@@ -26,48 +26,57 @@ import os
 import sys
 from io import StringIO
 import unittest
-from unittest.mock import patch, MagicMock
-from s3_lifecycle_manager.auth import configure_aws_credentials, save_credentials_to_file
-import logging
+from unittest.mock import patch
+from s3_lifecycle_manager.auth import (
+    configure_aws_credentials,
+    save_credentials_to_file,
+)
 
 
 class TestAWSCredentialConfiguration(unittest.TestCase):
     """Tests for AWS credential configuration functions."""
 
-    @patch('s3_lifecycle_manager.auth.boto3.client')
+    @patch("s3_lifecycle_manager.auth.boto3.client")
     def test_configure_aws_credentials_already_configured(self, mock_boto_client):
         """Test when AWS credentials are already configured."""
         # Simula credenciais já configuradas
         mock_boto_client().get_caller_identity.return_value = {
-            'UserId': 'test-user',
-            'Account': 'test-account',
-            'Arn': 'arn:aws:iam::test-account:user/test-user'
+            "UserId": "test-user",
+            "Account": "test-account",
+            "Arn": "arn:aws:iam::test-account:user/test-user",
         }
 
-        with self.assertLogs('s3_lifecycle_manager.auth', level='INFO') as log:
-            with patch('builtins.input', return_value=''), \
-                    patch('getpass.getpass', return_value=''):
+        with self.assertLogs("s3_lifecycle_manager.auth", level="INFO") as log:
+            with patch("builtins.input", return_value=""), patch(
+                "getpass.getpass", return_value=""
+            ):
                 configure_aws_credentials()
                 mock_boto_client().get_caller_identity.assert_called_once()
                 # Verifica se a mensagem correta foi logada
                 self.assertIn(
-                    "INFO:s3_lifecycle_manager.auth:AWS credentials are already configured.", log.output)
+                    "INFO:s3_lifecycle_manager.auth:AWS credentials are already configured.",
+                    log.output,
+                )
 
-    @patch('s3_lifecycle_manager.auth.os.makedirs')
-    @patch('s3_lifecycle_manager.auth.open', new_callable=unittest.mock.mock_open)
+    @patch("s3_lifecycle_manager.auth.os.makedirs")
+    @patch("s3_lifecycle_manager.auth.open", new_callable=unittest.mock.mock_open)
     def test_save_credentials_to_file(self, mock_open, mock_makedirs):
         """Test saving AWS credentials to a file."""
         save_credentials_to_file(
-            'test-access-key-id', 'test-secret-access-key', 'test-session-token')
+            "test-access-key-id", "test-secret-access-key", "test-session-token"
+        )
 
         mock_makedirs.assert_called_once_with(
-            os.path.expanduser('~/.aws'), exist_ok=True)
-        mock_open.assert_called_once_with(os.path.expanduser(
-            '~/.aws/credentials'), 'w', encoding='utf-8')
+            os.path.expanduser("~/.aws"), exist_ok=True
+        )
+        mock_open.assert_called_once_with(
+            os.path.expanduser("~/.aws/credentials"), "w", encoding="utf-8"
+        )
         mock_open().write.assert_any_call("[default]\n")
         mock_open().write.assert_any_call("aws_access_key_id = test-access-key-id\n")
         mock_open().write.assert_any_call(
-            "aws_secret_access_key = test-secret-access-key\n")
+            "aws_secret_access_key = test-secret-access-key\n"
+        )
         mock_open().write.assert_any_call("aws_session_token = test-session-token\n")
 
     def _get_output(self, func):
@@ -79,5 +88,5 @@ class TestAWSCredentialConfiguration(unittest.TestCase):
         return output.getvalue()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
