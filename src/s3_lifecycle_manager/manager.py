@@ -78,9 +78,7 @@ class S3LifecycleManager:
             return response.get("Rules", [])
         except ClientError as error:
             if error.response["Error"]["Code"] == "NoSuchLifecycleConfiguration":
-                self.logger.info(
-                    "No lifecycle configuration found for bucket %s", bucket_name
-                )
+                return []
             else:
                 self.logger.warning(
                     "Unable to get the lifecycle policy for bucket %s: %s",
@@ -190,7 +188,8 @@ class S3LifecycleManager:
                 "AbortIncompleteMultipartUploadDays",
             ]
 
-            self.logger.info("Saving lifecycle policies to CSV file: %s", filename)
+            self.logger.info(
+                "Saving lifecycle policies to CSV file: %s", filename)
             with open(filename, mode="w", encoding="utf-8", newline="") as file:
                 writer = csv.DictWriter(file, fieldnames=fieldnames)
                 writer.writeheader()
@@ -198,4 +197,5 @@ class S3LifecycleManager:
                     writer.writerow(policy)
             self.logger.info("Policies successfully saved to %s", filename)
         except IOError as error:
-            self.logger.error("Error saving policies to file %s: %s", filename, error)
+            self.logger.error(
+                "Error saving policies to file %s: %s", filename, error)
