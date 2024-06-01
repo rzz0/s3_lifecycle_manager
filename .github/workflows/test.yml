@@ -11,9 +11,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
-          python-version: "3.9"
+          python-version: "3.9" # ou a versão que você está usando
 
       - name: Install dependencies
         run: |
@@ -24,6 +24,8 @@ jobs:
           pip install pytest
 
       - name: Run tests
+        env:
+          PYTHONPATH: src
         run: |
           . .venv/bin/activate
           pytest -v
