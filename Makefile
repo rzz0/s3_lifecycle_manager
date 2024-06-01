@@ -5,7 +5,9 @@ PIP = $(VENV_DIR)/bin/pip
 PYTEST = $(VENV_DIR)/bin/pytest
 PYLINT = $(VENV_DIR)/bin/pylint
 BLACK = $(VENV_DIR)/bin/black
+BANDIT = $(VENV_DIR)/bin/bandit
 REQUIREMENTS = requirements.txt
+
 
 # Targets
 all: install test
@@ -35,8 +37,12 @@ format: $(VENV_DIR)/bin/activate
 lint: $(VENV_DIR)/bin/activate
 	PYTHONPATH=src $(PYLINT) src tests
 
+# Security check
+security: $(VENV_DIR)/bin/activate
+	PYTHONPATH=src $(BANDIT) -r src
+
 # Update dependencies
 update: $(VENV_DIR)/bin/activate
 	$(PIP) install --upgrade -r $(REQUIREMENTS)
 
-.PHONY: all install test clean format lint update
+.PHONY: all install test clean format lint security update

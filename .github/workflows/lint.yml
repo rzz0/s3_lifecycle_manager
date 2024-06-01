@@ -1,9 +1,9 @@
-name: Run Tests
+name: Lint Code Base
 
 on: [push, pull_request]
 
 jobs:
-  test:
+  lint:
     runs-on: ubuntu-latest
 
     steps:
@@ -20,12 +20,10 @@ jobs:
           python -m venv .venv
           . .venv/bin/activate
           pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest
+          pip install pylint flake8 black
 
-      - name: Run tests
-        env:
-          PYTHONPATH: src
+      - name: Run Linters
         run: |
           . .venv/bin/activate
-          pytest -v
+          pylint src/ tests/
+          black --check src/ tests/
