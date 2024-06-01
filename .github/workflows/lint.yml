@@ -1,9 +1,9 @@
-name: Run Tests
+name: Lint Code Base
 
 on: [push, pull_request]
 
 jobs:
-  test:
+  lint:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,11 +21,9 @@ jobs:
           . .venv/bin/activate
           pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest
 
-      - name: Run tests
-        env:
-          PYTHONPATH: src
+      - name: Run Linters
         run: |
           . .venv/bin/activate
-          pytest -v
+          pylint --fail-under=9.7 src/ tests/
+          black --check src/ tests/

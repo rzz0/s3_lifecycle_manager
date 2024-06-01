@@ -65,8 +65,10 @@ def main():
         manager.save_policies_csv("lifecycle_buckets.csv")
 
         logger.info("Exporting current lifecycle policies.")
-        lifecycle_policies = {policy['Bucket']: manager.get_lifecycle_policy(
-            policy['Bucket']) for policy in manager.policies}
+        lifecycle_policies = {
+            policy["Bucket"]: manager.get_lifecycle_policy(policy["Bucket"])
+            for policy in manager.policies
+        }
         backup_manager.export_lifecycle_policies(lifecycle_policies)
 
         # Optional: Restore lifecycle policies for a specific bucket

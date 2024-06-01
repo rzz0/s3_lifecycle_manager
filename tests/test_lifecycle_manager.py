@@ -28,6 +28,7 @@ import csv
 from botocore.exceptions import ClientError
 from s3_lifecycle_manager.manager import S3LifecycleManager
 from s3_lifecycle_manager.logger import configure_logging
+from s3_lifecycle_manager.lifecycle_policy import LifecyclePolicy
 
 
 class TestS3LifecycleManager(unittest.TestCase):
@@ -164,8 +165,11 @@ class TestS3LifecycleManager(unittest.TestCase):
             "AbortIncompleteMultipartUpload": {"DaysAfterInitiation": 7},
         }
 
-        result = self.manager.analyze_rule(rule)
+        result = LifecyclePolicy.from_rule(
+            "test-bucket", rule
+        )  # Use LifecyclePolicy directly
         expected = {
+            "Bucket": "test-bucket",
             "Status": "Enabled",
             "ID": "rule1",
             "Prefix": "myprefix",
