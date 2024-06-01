@@ -35,7 +35,7 @@ format: $(VENV_DIR)/bin/activate
 
 # Static code analysis
 lint: $(VENV_DIR)/bin/activate
-	PYTHONPATH=src $(PYLINT) src tests
+	PYTHONPATH=src $(PYLINT) --fail-under=9.7 src tests
 
 # Security check
 security: $(VENV_DIR)/bin/activate

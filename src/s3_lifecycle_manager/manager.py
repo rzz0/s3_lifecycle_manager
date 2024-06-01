@@ -9,10 +9,11 @@ not have lifecycle rules.
 
 Example usage:
 --------------
-    from s3_lifecycle_manager import S3LifecycleManager
+    from s3_lifecycle_manager.manager import S3LifecycleManager
 
     manager = S3LifecycleManager()
-    manager.process_buckets()
+    bucket_names = [bucket["Name"] for bucket in manager.list_buckets()]
+    manager.process_buckets(bucket_names)
     manager.save_policies_csv('lifecycle_buckets.csv')
 
 Dependencies:
@@ -35,6 +36,7 @@ import boto3
 from botocore.exceptions import ClientError
 from .auth import configure_aws_credentials
 from .logger import get_logger
+from .lifecycle_policy import LifecyclePolicy
 
 
 class S3LifecycleManager:
@@ -79,58 +81,12 @@ class S3LifecycleManager:
         except ClientError as error:
             if error.response["Error"]["Code"] == "NoSuchLifecycleConfiguration":
                 return []
-            else:
-                self.logger.warning(
-                    "Unable to get the lifecycle policy for bucket %s: %s",
-                    bucket_name,
-                    error,
-                )
+            self.logger.warning(
+                "Unable to get the lifecycle policy for bucket %s: %s",
+                bucket_name,
+                error,
+            )
             return []
-
-    def analyze_rule(self, rule: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Analyzes a lifecycle rule and extracts its information.
-
-        :param rule: Lifecycle rule.
-        :type rule: Dict[str, Any]
-        :returns: Dictionary containing detailed information about the rule.
-        :rtype: Dict[str, Any]
-        """
-        transitions = ", ".join(
-            [
-                f"{t.get('Days', 'N/A')} days to {t.get('StorageClass', 'N/A')}"
-                for t in rule.get("Transitions", [])
-            ]
-        )
-        expiration = rule.get("Expiration", {}).get("Days", "N/A")
-        noncurrent_transitions = ", ".join(
-            [
-                f"{t.get('NoncurrentDays', 'N/A')} days to {t.get('StorageClass', 'N/A')}"
-                for t in rule.get("NoncurrentVersionTransitions", [])
-            ]
-        )
-        noncurrent_expiration = rule.get("NoncurrentVersionExpiration", {}).get(
-            "NoncurrentDays", "N/A"
-        )
-        abort_multipart = rule.get("AbortIncompleteMultipartUpload", {}).get(
-            "DaysAfterInitiation", "N/A"
-        )
-
-        filter_prefix = rule.get("Filter", {}).get("Prefix", "No Prefix")
-        tag_filter = rule.get("Filter", {}).get("Tag", None)
-        if tag_filter:
-            filter_prefix += f", Tag: {tag_filter['Key']}={tag_filter['Value']}"
-
-        return {
-            "Status": rule.get("Status", "Unknown"),
-            "ID": rule.get("ID", "No ID"),
-            "Prefix": filter_prefix,
-            "Transitions": transitions,
-            "ExpirationDays": expiration,
-            "NoncurrentVersionTransitions": noncurrent_transitions,
-            "NoncurrentVersionExpirationDays": noncurrent_expiration,
-            "AbortIncompleteMultipartUploadDays": abort_multipart,
-        }
 
     def process_buckets(self, bucket_names: List[str]) -> None:
         """
@@ -145,22 +101,11 @@ class S3LifecycleManager:
             rules = self.get_lifecycle_policy(bucket_name)
             if not rules:
                 self.policies.append(
-                    {
-                        "Bucket": bucket_name,
-                        "Status": "No Rules",
-                        "ID": "N/A",
-                        "Prefix": "N/A",
-                        "Transitions": "N/A",
-                        "ExpirationDays": "N/A",
-                        "NoncurrentVersionTransitions": "N/A",
-                        "NoncurrentVersionExpirationDays": "N/A",
-                        "AbortIncompleteMultipartUploadDays": "N/A",
-                    }
+                    {"Bucket": bucket_name, **LifecyclePolicy.default_policy()}
                 )
             else:
                 for rule in rules:
-                    analyzed_rule = self.analyze_rule(rule)
-                    analyzed_rule["Bucket"] = bucket_name
+                    analyzed_rule = LifecyclePolicy.from_rule(bucket_name, rule)
                     self.policies.append(analyzed_rule)
         self.logger.info("Finished processing buckets for lifecycle policies.")
 

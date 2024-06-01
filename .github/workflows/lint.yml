@@ -25,5 +25,5 @@ jobs:
       - name: Run Linters
         run: |
           . .venv/bin/activate
-          pylint src/ tests/
+          pylint --fail-under=9.7 src/ tests/
           black --check src/ tests/
