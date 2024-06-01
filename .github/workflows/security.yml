@@ -1,9 +1,9 @@
-name: Run Tests
+name: Security Check
 
 on: [push, pull_request]
 
 jobs:
-  test:
+  bandit:
     runs-on: ubuntu-latest
 
     steps:
@@ -20,12 +20,9 @@ jobs:
           python -m venv .venv
           . .venv/bin/activate
           pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest
+          pip install bandit
 
-      - name: Run tests
-        env:
-          PYTHONPATH: src
+      - name: Run Bandit
         run: |
           . .venv/bin/activate
-          pytest -v
+          bandit -r src/
