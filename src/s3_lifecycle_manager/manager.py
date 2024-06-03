@@ -34,7 +34,7 @@ import csv
 from typing import List, Dict, Any
 import boto3
 from botocore.exceptions import ClientError
-from .auth import configure_aws_credentials
+from .auth import verify_aws_credentials
 from .logger import get_logger
 from .lifecycle_policy import LifecyclePolicy
 
@@ -43,7 +43,7 @@ class S3LifecycleManager:
     """Manages the lifecycle policies of S3 buckets."""
 
     def __init__(self):
-        configure_aws_credentials()
+        verify_aws_credentials()
         self.s3_client = boto3.client("s3")
         self.policies: List[Dict[str, Any]] = []
         self.logger = get_logger(__name__)

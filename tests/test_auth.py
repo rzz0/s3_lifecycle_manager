@@ -1,16 +1,17 @@
 """
-Test Suite for AWS Credential Configuration
-===========================================
+Test Suite for AWS Credential Verification
+==========================================
 
-This module contains unit tests for the AWS credential configuration functions.
-It tests the functionalities such as checking if AWS credentials are configured and
-saving credentials to a file.
+This module contains unit tests for the AWS credential verification function.
+It tests the functionalities such as checking if AWS credentials are correctly
+configured, missing, or partially configured.
 
 Dependencies:
 -------------
-- unittest
 - unittest.mock
+- pytest
 - boto3
+- botocore.exceptions
 
 Author:
 -------
@@ -22,71 +23,52 @@ License:
 MIT License
 """
 
-import os
-import sys
-from io import StringIO
-import unittest
 from unittest.mock import patch
-from s3_lifecycle_manager.auth import (
-    configure_aws_credentials,
-    save_credentials_to_file,
-)
+import pytest
+from botocore.exceptions import NoCredentialsError, PartialCredentialsError
+from s3_lifecycle_manager.auth import verify_aws_credentials
 
 
-class TestAWSCredentialConfiguration(unittest.TestCase):
-    """Tests for AWS credential configuration functions."""
+@patch("s3_lifecycle_manager.auth.boto3.client")
+def test_verify_aws_credentials_success(mock_boto_client):
+    """
+    Test when AWS credentials are configured correctly.
 
-    @patch("s3_lifecycle_manager.auth.boto3.client")
-    def test_configure_aws_credentials_already_configured(self, mock_boto_client):
-        """Test when AWS credentials are already configured."""
-        # Simula credenciais já configuradas
-        mock_boto_client().get_caller_identity.return_value = {
-            "UserId": "test-user",
-            "Account": "test-account",
-            "Arn": "arn:aws:iam::test-account:user/test-user",
-        }
+    This test simulates a scenario where AWS credentials are correctly
+    configured by mocking the boto3 client and verifying that the function
+    `verify_aws_credentials` returns True.
+    """
+    mock_boto_client.return_value.get_caller_identity.return_value = {}
+    assert verify_aws_credentials() is True
 
-        with self.assertLogs("s3_lifecycle_manager.auth", level="INFO") as log:
-            with patch("builtins.input", return_value=""), patch(
-                "getpass.getpass", return_value=""
-            ):
-                configure_aws_credentials()
-                mock_boto_client().get_caller_identity.assert_called_once()
-                # Verifica se a mensagem correta foi logada
-                self.assertIn(
-                    "INFO:s3_lifecycle_manager.auth:AWS credentials are already configured.",
-                    log.output,
-                )
 
-    @patch("s3_lifecycle_manager.auth.os.makedirs")
-    @patch("s3_lifecycle_manager.auth.open", new_callable=unittest.mock.mock_open)
-    def test_save_credentials_to_file(self, mock_open, mock_makedirs):
-        """Test saving AWS credentials to a file."""
-        save_credentials_to_file(
-            "test-access-key-id", "test-secret-access-key", "test-session-token"
-        )
+@patch("s3_lifecycle_manager.auth.boto3.client")
+def test_verify_aws_credentials_no_credentials(mock_boto_client):
+    """
+    Test when AWS credentials are missing.
 
-        mock_makedirs.assert_called_once_with(
-            os.path.expanduser("~/.aws"), exist_ok=True
-        )
-        mock_open.assert_called_once_with(
-            os.path.expanduser("~/.aws/credentials"), "w", encoding="utf-8"
-        )
-        mock_open().write.assert_any_call("[default]\n")
-        mock_open().write.assert_any_call("aws_access_key_id = test-access-key-id\n")
-        mock_open().write.assert_any_call(
-            "aws_secret_access_key = test-secret-access-key\n"
-        )
-        mock_open().write.assert_any_call("aws_session_token = test-session-token\n")
+    This test simulates a scenario where AWS credentials are missing by
+    raising a NoCredentialsError and verifying that the function
+    `verify_aws_credentials` returns False.
+    """
+    mock_boto_client.return_value.get_caller_identity.side_effect = NoCredentialsError()
+    assert verify_aws_credentials() is False
 
-    def _get_output(self, func):
-        """Helper function to capture printed output of a function."""
-        output = StringIO()
-        sys.stdout = output
-        func()
-        sys.stdout = sys.__stdout__
-        return output.getvalue()
+
+@patch("s3_lifecycle_manager.auth.boto3.client")
+def test_verify_aws_credentials_partial_credentials(mock_boto_client):
+    """
+    Test when AWS credentials are partially configured.
+
+    This test simulates a scenario where AWS credentials are partially
+    configured by raising a PartialCredentialsError and verifying that the
+    function `verify_aws_credentials` returns False.
+    """
+    mock_boto_client.return_value.get_caller_identity.side_effect = (
+        PartialCredentialsError(provider="aws", cred_var="AWS_SECRET_ACCESS_KEY")
+    )
+    assert verify_aws_credentials() is False
 
 
 if __name__ == "__main__":
-    unittest.main()
+    pytest.main()
