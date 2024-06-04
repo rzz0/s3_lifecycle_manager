@@ -1,3 +1,29 @@
+"""
+Test Suite for LifecyclePolicy
+==============================
+
+This module contains unit tests for the LifecyclePolicy class. It tests the functionalities
+such as retrieving the default lifecycle policy and constructing a lifecycle policy dictionary
+from a given rule.
+
+Example usage:
+--------------
+    Run this script with pytest or unittest to execute the tests.
+
+Dependencies:
+-------------
+- unittest
+
+Author:
+-------
+- Rodrigo de Souza Rampazzo <rosorzz@protonmail.com>
+- GitHub: https://github.com/rzz0
+
+License:
+--------
+MIT License
+"""
+
 import unittest
 from s3_lifecycle_manager.lifecycle_policy import LifecyclePolicy
 
