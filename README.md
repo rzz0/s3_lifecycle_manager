@@ -12,15 +12,16 @@ The S3 Lifecycle Manager is a module designed to manage the lifecycle policies o
 
 ## Description
 
-The S3 Lifecycle Manager is a powerful tool to manage the lifecycle policies of S3 buckets. S3 lifecycle policies help define rules for the transition and expiration of objects in S3, enabling storage optimization and cost reduction. This module facilitates the administration of these policies, offering functionalities to list, export, save, and restore lifecycle configurations.
+The S3 Lifecycle Manager is a Python package designed to manage the lifecycle policies of S3 buckets. S3 lifecycle policies help define rules for the transition and expiration of objects in S3, enabling storage optimization and cost reduction. This module facilitates the administration of these policies, offering functionalities to list, export, save, and restore lifecycle configurations.
 
 ### Key Features
 
-- **List Buckets:** Lists all S3 buckets available in the AWS account.
-- **Get Lifecycle Policies:** Retrieves lifecycle configurations for specified buckets.
-- **Export Policies:** Exports lifecycle policies to JSON files, creating backups of the configurations.
-- **Restore Policies:** Restores lifecycle policies from backup files.
-- **Save Policies to CSV:** Saves lifecycle policies to a CSV file for analysis and documentation.
+- **List Buckets:** Retrieves and lists all S3 buckets in your AWS account.
+- **Extract Lifecycle Policies:** Extracts lifecycle policies for each bucket and saves them to a CSV file.
+- **Backup Policies:** Exports lifecycle policies to a specified directory.
+- **Restore Policies:** Restores lifecycle policies from backups.
+- **AWS Glue Log Paths:** Lists all temporary paths and Spark UI logs paths of AWS Glue jobs and generates reports.
+
 
 ## Installation
 
@@ -41,16 +42,6 @@ pip install .
 ## Usage
 
 The main functionalities of the S3 Lifecycle Manager are accessible through the `s3_lifecycle_manager` command-line interface.
-
-### Configuring AWS Credentials
-
-Before running the S3 Lifecycle Manager, ensure your AWS credentials are configured. You can use the `configure_aws_credentials` function to prompt for credentials if they are not already set:
-
-```python
-from s3_lifecycle_manager.auth import configure_aws_credentials
-
-configure_aws_credentials()
-```
 
 ### Running the S3 Lifecycle Manager
 
@@ -73,6 +64,74 @@ backup_manager = S3LifecycleBackupManager('./backups')
 backup_manager.restore_lifecycle_policies('your-bucket-name')
 ```
 
+## AWS Glue Log Paths
+
+
+### Command Line Usage
+
+You can also use the module from the command line:
+
+```
+s3_lifecycle_manager --logs
+```
+## Development
+
+### Setting Up
+
+Set up a virtual environment and install dependencies using the `Makefile`:
+
+```bash
+make
+```
+
+### Running Tests
+
+To run tests:
+
+```bash
+make test
+```
+
+### Cleaning Up
+
+To clean up the environment:
+
+```bash
+make clean
+```
+
+### Formatting Code
+
+To format the code:
+
+```bash
+make format
+```
+
+### Linting
+
+To run static code analysis:
+
+```bash
+make lint
+```
+
+### Security Check
+
+To run security checks:
+
+```bash
+make security
+```
+
+### Updating Dependencies
+
+To update dependencies:
+
+```bash
+make update
+```
+
 ## Project Structure
 
 The project has the following structure:
@@ -80,8 +139,11 @@ The project has the following structure:
 - **`src/`**: Contains the source code for the S3 Lifecycle Manager.
 - **`tests/`**: Contains the test cases for the project.
 - **`README.md`**: This file.
+- **`LICENSE`**: MIT License.
 - **`setup.py`**: Setup script for the package.
 - **`pyproject.toml`**: Configuration file for the build system.
+- **`Makefile`**: Set up a virtual environment and install dependencies.
+- **`pytest.ini`**: Set up src dir to pytest.
 
 ## Future Functionalities
 
