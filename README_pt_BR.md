@@ -1,4 +1,3 @@
-
 # Gerenciador de Ciclo de Vida S3
 
 O Gerenciador de Ciclo de Vida S3 é um módulo projetado para gerenciar as políticas de ciclo de vida dos buckets S3. Ele permite processar, exportar e restaurar políticas de ciclo de vida, fornecendo funcionalidades para backup e gerenciamento dessas políticas.
@@ -51,15 +50,22 @@ s3_lifecycle_manager
 
 Este comando processará todos os buckets S3, salvará suas políticas de ciclo de vida em um arquivo CSV e exportará as políticas de ciclo de vida atuais para arquivos de backup.
 
+### S3 Lifecycle Manager Help
+
+Mostra todas as opções do S3 Lifecycle Manager:
+
+```bash
+s3_lifecycle_manager -h
+```
+
+Esse comando mostra todas as opções do S3 Lifecycle Manager.
+
 ### Restaurando Políticas de Ciclo de Vida
 
 Para restaurar políticas de ciclo de vida a partir de um arquivo de backup, você pode usar o `S3LifecycleBackupManager`:
 
 ```python
-from s3_lifecycle_manager.backup_manager import S3LifecycleBackupManager
-
-backup_manager = S3LifecycleBackupManager('./backups')
-backup_manager.restore_lifecycle_policies('nome-do-seu-bucket')
+s3_lifecycle_manager --restore --bucket nome-do-bucket-a-restaurar
 ```
 
 ## AWS Glue Log Paths
@@ -69,7 +75,7 @@ backup_manager.restore_lifecycle_policies('nome-do-seu-bucket')
 Você também pode usar o módulo pela linha de comando:
 
 ```bash
-s3_lifecycle_manager --logs
+s3_lifecycle_manager --logs-glue-job
 ```
 
 Este comando processará os logs dos trabalhos do AWS Glue, salvará os relatórios e gerenciará as políticas de ciclo de vida do S3.

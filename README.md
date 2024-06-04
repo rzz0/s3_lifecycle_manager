@@ -22,7 +22,6 @@ The S3 Lifecycle Manager is a Python package designed to manage the lifecycle po
 - **Restore Policies:** Restores lifecycle policies from backups.
 - **AWS Glue Log Paths:** Lists all temporary paths and Spark UI logs paths of AWS Glue jobs and generates reports.
 
-
 ## Installation
 
 To install the S3 Lifecycle Manager, you can use `pip`. First, make sure you have Python 3.6 or higher installed, then run the following command:
@@ -53,27 +52,34 @@ s3_lifecycle_manager
 
 This command will process all S3 buckets, save their lifecycle policies to a CSV file, and export the current lifecycle policies to backup files.
 
+### S3 Lifecycle Manager Help
+
+Show options to S3 Lifecycle Manager:
+
+```bash
+s3_lifecycle_manager -h
+```
+
+This command will show all options to S3 Lifecycle Manager.
+
 ### Restoring Lifecycle Policies
 
 To restore lifecycle policies from a backup file, you can use the `S3LifecycleBackupManager`:
 
 ```python
-from s3_lifecycle_manager.backup_manager import S3LifecycleBackupManager
-
-backup_manager = S3LifecycleBackupManager('./backups')
-backup_manager.restore_lifecycle_policies('your-bucket-name')
+s3_lifecycle_manager --restore --bucket bucket-name-to-restore
 ```
 
 ## AWS Glue Log Paths
-
 
 ### Command Line Usage
 
 You can also use the module from the command line:
 
 ```
-s3_lifecycle_manager --logs
+s3_lifecycle_manager --logs-glue-job
 ```
+
 ## Development
 
 ### Setting Up
