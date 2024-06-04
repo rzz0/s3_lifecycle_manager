@@ -39,20 +39,73 @@ from s3_lifecycle_manager.backup_manager import S3LifecycleBackupManager
 from s3_lifecycle_manager.aws_glue_log_paths import GlueLogPathsManager
 from s3_lifecycle_manager.logger import configure_logging, get_logger
 
+REPORT_LIFECYCLE_BUCKETS_CSV = "REPORT_lifecycle_buckets.csv"
+REPORT_GLUE_JOBS_REPORT_CSV = "REPORT_glue_jobs_report.csv"
+REPORT_GLUE_JOBS_BUCKETS_REPORT_CSV = "REPORT_glue_jobs_buckets_report.csv"
+
+
+def parse_arguments():
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(description="S3 Lifecycle Manager Script")
+    parser.add_argument(
+        "--logs-glue-job",
+        action="store_true",
+        help="Process AWS Glue job logs and save the log paths and buckets report to CSV files.",
+    )
+    parser.add_argument(
+        "--restore",
+        action="store_true",
+        help="Restore lifecycle policies from backup files.",
+    )
+    parser.add_argument(
+        "--bucket",
+        type=str,
+        help="Specify the bucket name to restore the lifecycle policy from a backup file.",
+    )
+    return parser.parse_args()
+
+
+def process_glue_logs(glue_log_manager):
+    """
+    Process AWS Glue job logs and save reports.
+
+    :param glue_log_manager: Instance of GlueLogPathsManager
+    """
+    glue_log_manager.process_glue_jobs()
+    glue_log_manager.save_report_csv(REPORT_GLUE_JOBS_REPORT_CSV)
+    glue_log_manager.save_buckets_report_csv(REPORT_GLUE_JOBS_BUCKETS_REPORT_CSV)
+
+
+def restore_lifecycle_policies(backup_manager, bucket):
+    """
+    Restore lifecycle policies for a specific bucket from backup.
+
+    :param backup_manager: Instance of S3LifecycleBackupManager
+    :param bucket: Name of the bucket to restore policies for
+    """
+    backup_manager.restore_lifecycle_policies(bucket)
+
+
+def process_and_save_lifecycle_policies(manager, backup_manager):
+    """
+    Process S3 buckets to extract lifecycle policies and save them to CSV.
+
+    :param manager: Instance of S3LifecycleManager
+    :param backup_manager: Instance of S3LifecycleBackupManager
+    """
+    bucket_names = [bucket["Name"] for bucket in manager.list_buckets()]
+    manager.process_buckets(bucket_names)
+    manager.save_policies_csv(REPORT_LIFECYCLE_BUCKETS_CSV)
+    lifecycle_policies = {
+        policy["Bucket"]: manager.get_lifecycle_policy(policy["Bucket"])
+        for policy in manager.policies
+    }
+    backup_manager.export_lifecycle_policies(lifecycle_policies)
+
 
 def main():
-    """
-    Main function to run the S3 bucket lifecycle manager with
-    backup functionality.
-    """
-    parser = argparse.ArgumentParser(description="S3 Lifecycle Manager Script")
-    parser.add_argument("--logs-glue-job", action="store_true",
-                        help="Process AWS Glue job logs and save the log paths and buckets report to CSV files.")
-    parser.add_argument("--restore", action="store_true",
-                        help="Restore lifecycle policies from backup files.")
-    parser.add_argument(
-        "--bucket", type=str, help="Specify the bucket name to restore the lifecycle policy from a backup file.")
-    args = parser.parse_args()
+    """Main function to run the S3 bucket lifecycle manager with backup functionality."""
+    args = parse_arguments()
 
     configure_logging()
     logger = get_logger(__name__)
@@ -68,54 +121,26 @@ def main():
     glue_log_manager = GlueLogPathsManager()
 
     if args.logs_glue_job:
-        logger.info(
-            "Process Glue logs is enabled. Starting Glue log processing.")
-        glue_log_manager.process_glue_jobs()
-
-        logger.info("Saving Glue jobs log paths report to CSV.")
-        glue_log_manager.save_report_csv("REPORT_glue_jobs_report.csv")
-
-        logger.info("Saving Glue jobs buckets report to CSV.")
-        glue_log_manager.save_buckets_report_csv(
-            "REPORT_glue_jobs_buckets_report.csv")
+        logger.info("Process Glue logs is enabled. Starting Glue log processing.")
+        process_glue_logs(glue_log_manager)
     elif args.restore:
         if not args.bucket:
-            logger.error(
-                "Bucket name is required for restoring lifecycle policies.")
+            logger.error("Bucket name is required for restoring lifecycle policies.")
             return
-
         try:
+            logger.info("Restoring lifecycle policies for bucket: %s", args.bucket)
+            restore_lifecycle_policies(backup_manager, args.bucket)
             logger.info(
-                "Restoring lifecycle policies for bucket: %s", args.bucket)
-            backup_manager.restore_lifecycle_policies(args.bucket)
-            logger.info(
-                "Successfully restored lifecycle policies for bucket: %s", args.bucket)
+                "Successfully restored lifecycle policies for bucket: %s", args.bucket
+            )
         except ClientError as error:
-            logger.error(
-                "An AWS client error occurred while restoring: %s", error)
+            logger.error("An AWS client error occurred while restoring: %s", error)
         except Exception as error:  # pylint: disable=W0718
-            logger.error(
-                "An unexpected error occurred while restoring: %s", error)
+            logger.error("An unexpected error occurred while restoring: %s", error)
     else:
         try:
             logger.info("Listing all S3 buckets.")
-            bucket_names = [bucket["Name"]
-                            for bucket in manager.list_buckets()]
-
-            logger.info("Processing S3 buckets to extract lifecycle policies.")
-            manager.process_buckets(bucket_names)
-
-            logger.info("Saving lifecycle policies to CSV.")
-            manager.save_policies_csv("REPORT_lifecycle_buckets.csv")
-
-            logger.info("Exporting current lifecycle policies.")
-            lifecycle_policies = {
-                policy["Bucket"]: manager.get_lifecycle_policy(
-                    policy["Bucket"])
-                for policy in manager.policies
-            }
-            backup_manager.export_lifecycle_policies(lifecycle_policies)
-
+            process_and_save_lifecycle_policies(manager, backup_manager)
             logger.info("Finished the S3 bucket lifecycle manager script.")
         except ClientError as error:
             logger.error("An AWS client error occurred: %s", error)
