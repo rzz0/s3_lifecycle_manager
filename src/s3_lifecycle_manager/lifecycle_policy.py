@@ -41,6 +41,13 @@ from typing import Dict, Any
 
 
 class LifecyclePolicy:
+    """
+    A class to manage the lifecycle policies of S3 buckets.
+
+    Provides methods to get the default lifecycle policy and to construct
+    a lifecycle policy dictionary from a given rule.
+    """
+
     @staticmethod
     def default_policy() -> Dict[str, Any]:
         """

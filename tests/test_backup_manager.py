@@ -40,7 +40,6 @@ class TestS3LifecycleBackupManager(unittest.TestCase):
         self.backup_manager = S3LifecycleBackupManager("./backups")
         self.bucket_names = ["test-bucket-1", "test-bucket-2"]
 
-        # Create backup directory if it does not exist
         if not os.path.exists("./backups"):
             os.makedirs("./backups")
 
@@ -55,7 +54,6 @@ class TestS3LifecycleBackupManager(unittest.TestCase):
 
     def test_export_lifecycle_policies(self):
         """Test exporting lifecycle policies for specified buckets."""
-        # Mock lifecycle policy
         lifecycle_policy = {
             "Rules": [
                 {
@@ -68,7 +66,7 @@ class TestS3LifecycleBackupManager(unittest.TestCase):
         }
         self.mock_s3_client.get_bucket_lifecycle_configuration.side_effect = [
             {"Rules": lifecycle_policy["Rules"]},
-            {"Rules": []},  # Simulate no lifecycle configuration for test-bucket-2
+            {"Rules": []},
         ]
 
         lifecycle_policies = {
@@ -78,14 +76,11 @@ class TestS3LifecycleBackupManager(unittest.TestCase):
 
         self.backup_manager.export_lifecycle_policies(lifecycle_policies)
 
-        # Verificar se os arquivos de backup foram criados
         backup_files = self.backup_manager.list_backups()
         self.assertIn("test-bucket-1_lifecycle_backup.json", backup_files)
 
-        # test-bucket-2 should not have a backup file as it has no lifecycle configuration
         self.assertNotIn("test-bucket-2_lifecycle_backup.json", backup_files)
 
-        # Verificar o conteúdo do arquivo de backup
         with open(
             os.path.join(
                 self.backup_manager.backup_dir, "test-bucket-1_lifecycle_backup.json"
@@ -98,7 +93,6 @@ class TestS3LifecycleBackupManager(unittest.TestCase):
 
     def test_restore_lifecycle_policies(self):
         """Test restoring lifecycle policies from backup files."""
-        # Mock lifecycle policy
         lifecycle_policy = {
             "Rules": [
                 {
@@ -119,7 +113,6 @@ class TestS3LifecycleBackupManager(unittest.TestCase):
 
         self.backup_manager.restore_lifecycle_policies("test-bucket-1")
 
-        # Verificar se a política de ciclo de vida foi restaurada
         self.mock_s3_client.put_bucket_lifecycle_configuration.assert_called_with(
             Bucket="test-bucket-1",
             LifecycleConfiguration={"Rules": lifecycle_policy["Rules"]},
@@ -127,7 +120,6 @@ class TestS3LifecycleBackupManager(unittest.TestCase):
 
     def test_list_backups(self):
         """Test listing available backup files."""
-        # Configure arquivos de backup
         backup_files = [
             "test-bucket-1_lifecycle_backup.json",
             "test-bucket-2_lifecycle_backup.json",
